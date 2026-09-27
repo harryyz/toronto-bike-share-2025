@@ -1,0 +1,5 @@
+step,trips
+Raw 2025 trips,7812520
+"Removed trips missing a start station, end station, or end time",7805563
+Removed trips shorter than 60 seconds,7788854
+Removed trips longer than 24 hours,7788842
