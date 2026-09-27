@@ -1,89 +1,135 @@
 #### Preamble ####
-# Purpose: Tests the structure and validity of the simulated Australian 
-  #electoral divisions dataset.
-# Author: Rohan Alexander
-# Date: 26 September 2024
-# Contact: rohan.alexander@utoronto.ca
+# Purpose: Tests the simulated Bike Share Toronto data: that it is valid, and
+#   that it contains the patterns the simulation was designed to produce.
+# Author: Harry Zhang
+# Date: 26 September 2026
+# Contact: yizhiharryzhang@gmail.com
 # License: MIT
-# Pre-requisites: 
-  # - The `tidyverse` package must be installed and loaded
-  # - 00-simulate_data.R must have been run
-# Any other information needed? Make sure you are in the `starter_folder` rproj
+# Pre-requisites: Run scripts/00-simulate_data.R first.
 
 
 #### Workspace setup ####
 library(tidyverse)
+library(testthat)
+library(here)
 
-analysis_data <- read_csv("data/00-simulated_data/simulated_data.csv")
+simulated_data <- read_csv(
+  here("data", "00-simulated_data", "simulated_trips.csv"),
+  show_col_types = FALSE
+)
 
-# Test if the data was successfully loaded
-if (exists("analysis_data")) {
-  message("Test Passed: The dataset was successfully loaded.")
-} else {
-  stop("Test Failed: The dataset could not be loaded.")
-}
+expected_columns <- c(
+  "trip_id", "start_time", "end_time", "duration_min",
+  "start_station_id", "start_station_name", "end_station_id", "end_station_name",
+  "bike_id", "user_type", "bike_type",
+  "trip_date", "month", "day_of_week", "day_type", "start_hour", "round_trip"
+)
+
+ontario_holidays_2025 <- ymd(c(
+  "2025-01-01", "2025-02-17", "2025-04-18", "2025-05-19", "2025-07-01",
+  "2025-09-01", "2025-10-13", "2025-12-25", "2025-12-26"
+))
 
 
-#### Test data ####
+#### Structure ####
+test_that("the dataset has 10,000 trips and every expected column", {
+  expect_equal(nrow(simulated_data), 10000)
+  expect_setequal(names(simulated_data), expected_columns)
+})
 
-# Check if the dataset has 151 rows
-if (nrow(analysis_data) == 151) {
-  message("Test Passed: The dataset has 151 rows.")
-} else {
-  stop("Test Failed: The dataset does not have 151 rows.")
-}
+test_that("no column has missing values", {
+  expect_equal(sum(is.na(simulated_data)), 0)
+})
 
-# Check if the dataset has 3 columns
-if (ncol(analysis_data) == 3) {
-  message("Test Passed: The dataset has 3 columns.")
-} else {
-  stop("Test Failed: The dataset does not have 3 columns.")
-}
+test_that("each trip appears exactly once", {
+  expect_false(anyDuplicated(simulated_data$trip_id) > 0)
+})
 
-# Check if all values in the 'division' column are unique
-if (n_distinct(analysis_data$division) == nrow(analysis_data)) {
-  message("Test Passed: All values in 'division' are unique.")
-} else {
-  stop("Test Failed: The 'division' column contains duplicate values.")
-}
 
-# Check if the 'state' column contains only valid Australian state names
-valid_states <- c("New South Wales", "Victoria", "Queensland", "South Australia", 
-                  "Western Australia", "Tasmania", "Northern Territory", 
-                  "Australian Capital Territory")
+#### Categories ####
+test_that("categorical variables contain only expected values", {
+  expect_setequal(unique(simulated_data$user_type), c("Member", "Casual"))
+  expect_setequal(unique(simulated_data$bike_type), c("Classic", "E-bike"))
+  expect_setequal(unique(simulated_data$day_type), c("Weekday", "Weekend or holiday"))
+})
 
-if (all(analysis_data$state %in% valid_states)) {
-  message("Test Passed: The 'state' column contains only valid Australian state names.")
-} else {
-  stop("Test Failed: The 'state' column contains invalid state names.")
-}
 
-# Check if the 'party' column contains only valid party names
-valid_parties <- c("Labor", "Liberal", "Greens", "National", "Other")
+#### Dates and times ####
+test_that("every trip starts in 2025, with month and hour matching the start time", {
+  expect_true(all(year(simulated_data$start_time) == 2025))
+  expect_true(all(simulated_data$month == month(simulated_data$start_time)))
+  expect_true(all(simulated_data$start_hour == hour(simulated_data$start_time)))
+})
 
-if (all(analysis_data$party %in% valid_parties)) {
-  message("Test Passed: The 'party' column contains only valid party names.")
-} else {
-  stop("Test Failed: The 'party' column contains invalid party names.")
-}
+test_that("weekends and statutory holidays are classed together", {
+  weekend_or_holiday <- wday(simulated_data$trip_date, week_start = 1) >= 6 |
+    simulated_data$trip_date %in% ontario_holidays_2025
+  expect_true(all((simulated_data$day_type == "Weekend or holiday") == weekend_or_holiday))
+})
 
-# Check if there are any missing values in the dataset
-if (all(!is.na(analysis_data))) {
-  message("Test Passed: The dataset contains no missing values.")
-} else {
-  stop("Test Failed: The dataset contains missing values.")
-}
+test_that("end minus start equals the recorded duration", {
+  clock_minutes <- as.numeric(difftime(
+    simulated_data$end_time, simulated_data$start_time, units = "mins"
+  ))
+  expect_true(all(abs(clock_minutes - simulated_data$duration_min) < 0.02))
+})
 
-# Check if there are no empty strings in 'division', 'state', and 'party' columns
-if (all(analysis_data$division != "" & analysis_data$state != "" & analysis_data$party != "")) {
-  message("Test Passed: There are no empty strings in 'division', 'state', or 'party'.")
-} else {
-  stop("Test Failed: There are empty strings in one or more columns.")
-}
 
-# Check if the 'party' column has at least two unique values
-if (n_distinct(analysis_data$party) >= 2) {
-  message("Test Passed: The 'party' column contains at least two unique values.")
-} else {
-  stop("Test Failed: The 'party' column contains less than two unique values.")
-}
+#### Durations and stations ####
+test_that("every trip lasts between 1 minute and 24 hours", {
+  expect_true(all(between(simulated_data$duration_min, 1, 24 * 60)))
+})
+
+test_that("round trips are exactly the trips that start and end at one station", {
+  same_station <- simulated_data$start_station_id == simulated_data$end_station_id
+  expect_true(all(simulated_data$round_trip == same_station))
+})
+
+test_that("station IDs are within the simulated range", {
+  expect_true(all(between(simulated_data$start_station_id, 7000, 7049)))
+  expect_true(all(between(simulated_data$end_station_id, 7000, 7049)))
+})
+
+
+#### Designed patterns ####
+# These check that the simulation contains the relationships it was built
+# to have, which the real data are later compared against.
+casual_share_by_season <- simulated_data |>
+  mutate(season = case_when(
+    month %in% c(7, 8) ~ "Summer",
+    month %in% c(1, 2) ~ "Winter"
+  )) |>
+  filter(!is.na(season)) |>
+  summarise(casual_share = mean(user_type == "Casual"), .by = season)
+
+by_user_type <- simulated_data |>
+  summarise(
+    weekend_share = mean(day_type == "Weekend or holiday"),
+    morning_peak_share = mean(start_hour[day_type == "Weekday"] %in% 7:9),
+    median_duration = median(duration_min),
+    round_trip_share = mean(round_trip),
+    .by = user_type
+  )
+
+member <- filter(by_user_type, user_type == "Member")
+casual <- filter(by_user_type, user_type == "Casual")
+
+test_that("casual riders make up a larger share of trips in summer than winter", {
+  expect_gt(
+    casual_share_by_season$casual_share[casual_share_by_season$season == "Summer"],
+    casual_share_by_season$casual_share[casual_share_by_season$season == "Winter"]
+  )
+})
+
+test_that("casual riders ride on weekends more than members do", {
+  expect_gt(casual$weekend_share, member$weekend_share)
+})
+
+test_that("members ride in the weekday morning peak more than casual riders", {
+  expect_gt(member$morning_peak_share, casual$morning_peak_share)
+})
+
+test_that("casual trips are longer and more often round trips", {
+  expect_gt(casual$median_duration, member$median_duration)
+  expect_gt(casual$round_trip_share, member$round_trip_share)
+})
