@@ -1,79 +1,118 @@
+%% ---------------------------------------------------------------------------
+%% Data
+%% ---------------------------------------------------------------------------
 
-
-@Manual{citeR,
-    title = {{R: A Language and Environment for Statistical Computing}},
-    author = {{R Core Team}},
-    organization = {R Foundation for Statistical Computing},
-    address = {Vienna, Austria},
-    year = {2023},
-    url = {https://www.R-project.org/},
-  }
-  
-  
-@Article{thereferencecanbewhatever,
-    title = {Welcome to the {tidyverse}},
-    author = {Hadley Wickham and Mara Averick and Jennifer Bryan and Winston Chang and Lucy D'Agostino McGowan and Romain François and Garrett Grolemund and Alex Hayes and Lionel Henry and Jim Hester and Max Kuhn and Thomas Lin Pedersen and Evan Miller and Stephan Milton Bache and Kirill Müller and Jeroen Ooms and David Robinson and Dana Paige Seidel and Vitalie Spinu and Kohske Takahashi and Davis Vaughan and Claus Wilke and Kara Woo and Hiroaki Yutani},
-    year = {2019},
-    journal = {Journal of Open Source Software},
-    volume = {4},
-    number = {43},
-    pages = {1686},
-    doi = {10.21105/joss.01686},
-  }  
-  
-  
-@Manual{citeLahman,
-    title = {{Lahman: Sean `Lahman' Baseball Database}},
-    author = {Michael Friendly and Chris Dalzell and Martin Monkman and Dennis Murphy},
-    year = {2020},
-    note = {R package version 8.0-0},
-    url = {https://CRAN.R-project.org/package=Lahman},
-  }  
-  
-  
-@article{gebru2021datasheets,
-  title={Datasheets for datasets},
-  author={Gebru, Timnit and Morgenstern, Jamie and Vecchione, Briana and Vaughan, Jennifer Wortman and Wallach, Hanna and Iii, Hal Daum{\'e} and Crawford, Kate},
-  journal={Communications of the ACM},
-  volume={64},
-  number={12},
-  pages={86--92},
-  year={2021},
-  publisher={ACM New York, NY, USA}
+@misc{bikesharedata,
+  author       = {{Toronto Parking Authority}},
+  title        = {{Bike Share Toronto} Ridership Data},
+  year         = {2026},
+  howpublished = {City of Toronto Open Data Portal},
+  url          = {https://open.toronto.ca/dataset/bike-share-toronto-ridership-data/},
+  note         = {Accessed 26 September 2026}
 }
 
-@Misc{rstanarm,
-    title = {{rstanarm: {Bayesian} applied regression modeling via {Stan}}},
-    author = {Ben Goodrich and Jonah Gabry and Imad Ali and Sam Brilleman},
-    note = {R package version 2.21.3},
-    year = {2022},
-    url = {https://mc-stan.org/rstanarm/},
-  }
-  
-@Manual{palmerpenguins,
-    title = {{palmerpenguins: Palmer Archipelago (Antarctica) penguin data}},
-    author = {Allison Marie Horst and Alison Presmanes Hill and Kristen B Gorman},
-    year = {2020},
-    note = {R package version 0.1.0},
-    doi = {10.5281/zenodo.3960218},
-    url = {https://allisonhorst.github.io/palmerpenguins/},
-  }
-  
-  
-@book{tellingstories,
-    title = {Telling Stories with Data},
-    author = {Rohan Alexander},
-    year = {2023},
-    publisher = {Chapman; Hall/CRC},
-    url = {https://tellingstorieswithdata.com/}
-  }  
-  
-  
+@misc{bikesharerealtime,
+  author       = {{Toronto Parking Authority}},
+  title        = {{Bike Share Toronto}},
+  year         = {2026},
+  howpublished = {City of Toronto Open Data Portal},
+  url          = {https://open.toronto.ca/dataset/bike-share-toronto/},
+  note         = {Real-time station data. Accessed 27 September 2026}
+}
 
-@Manual{shelter,
-    title = {Deaths of Shelter Residents},
-    author = {{Toronto Shelter & Support Services}},
-    year = {2024},
-    note = {As accessed 2024-10-02.},
-    url = {https://open.toronto.ca/dataset/deaths-of-shelter-residents/},
-  }  
+%% ---------------------------------------------------------------------------
+%% Literature
+%% ---------------------------------------------------------------------------
+
+@article{elassi2017,
+  author  = {El-Assi, Wafic and {Salah Mahmoud}, Mohamed and {Nurul Habib}, Khandker},
+  title   = {Effects of Built Environment and Weather on Bike Sharing Demand: A Station Level Analysis of Commercial Bike Sharing in {Toronto}},
+  journal = {Transportation},
+  year    = {2017},
+  volume  = {44},
+  number  = {3},
+  pages   = {589--613},
+  doi     = {10.1007/s11116-015-9669-z}
+}
+
+@article{buck2013,
+  author  = {Buck, Darren and Buehler, Ralph and Happ, Patricia and Rawls, Bradley and Chung, Payton and Borecki, Natalie},
+  title   = {Are Bikeshare Users Different from Regular Cyclists? {A} First Look at Short-Term Users, Annual Members, and Area Cyclists in the {Washington, D.C.}, Region},
+  journal = {Transportation Research Record},
+  year    = {2013},
+  volume  = {2387},
+  number  = {1},
+  pages   = {112--119},
+  doi     = {10.3141/2387-13}
+}
+
+@article{fishman2016,
+  author  = {Fishman, Elliot},
+  title   = {Bikeshare: A Review of Recent Literature},
+  journal = {Transport Reviews},
+  year    = {2016},
+  volume  = {36},
+  number  = {1},
+  pages   = {92--113},
+  doi     = {10.1080/01441647.2015.1033036}
+}
+
+@article{gebhart2014,
+  author  = {Gebhart, Kyle and Noland, Robert B.},
+  title   = {The Impact of Weather Conditions on Bikeshare Trips in {Washington, DC}},
+  journal = {Transportation},
+  year    = {2014},
+  volume  = {41},
+  number  = {6},
+  pages   = {1205--1225},
+  doi     = {10.1007/s11116-014-9540-7}
+}
+
+@article{bean2021,
+  author  = {Bean, Richard and Pojani, Dorina and Corcoran, Jonathan},
+  title   = {How Does Weather Affect Bikeshare Use? {A} Comparative Analysis of Forty Cities across Climate Zones},
+  journal = {Journal of Transport Geography},
+  year    = {2021},
+  volume  = {95},
+  pages   = {103155},
+  doi     = {10.1016/j.jtrangeo.2021.103155}
+}
+
+%% ---------------------------------------------------------------------------
+%% Pricing and policy context
+%% ---------------------------------------------------------------------------
+
+@techreport{tpa2023rates,
+  author      = {{Toronto Parking Authority}},
+  title       = {Delivering Improved Accessibility: {Bike Share Toronto}'s Modernized Rate Structure Update},
+  institution = {Toronto Parking Authority},
+  type        = {Report for Action},
+  year        = {2023},
+  month       = {November},
+  url         = {https://www.toronto.ca/legdocs/mmis/2024/ie/bgrd/backgroundfile-241790.pdf}
+}
+
+@misc{bikesharepricing,
+  author = {{Bike Share Toronto}},
+  title  = {Pricing},
+  year   = {2026},
+  url    = {https://bikesharetoronto.com/pricing/},
+  note   = {Accessed 26 September 2026}
+}
+
+@misc{cycleto2023pricing,
+  author = {{Cycle Toronto}},
+  title  = {{Bike Share Toronto} Just Announced a New Pricing Structure: What This Means and Why You Should Care},
+  year   = {2023},
+  month  = {March},
+  url    = {https://www.cycleto.ca/_bike_share_toronto_pricing}
+}
+
+@misc{cbc2026appeal,
+  author       = {Harrison, Lane and {Silva Ponte}, Gabriela},
+  title        = {{Ontario Court of Appeal} Says {Ford} Can Rip Out {Toronto} Bike Lanes},
+  year         = {2026},
+  month        = {August},
+  howpublished = {CBC News},
+  url          = {https://www.cbc.ca/news/canada/toronto/bike-lane-removal-appeal-court-decision-9.7307310}
+}

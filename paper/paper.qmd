@@ -1,194 +1,285 @@
 ---
-title: "My title"
-subtitle: "My subtitle if needed"
-author: 
-  - First author
-  - Another author
-thanks: "Code and data are available at: [https://github.com/RohanAlexander/starter_folder](https://github.com/RohanAlexander/starter_folder)."
+title: "Casual Riders on Bike Share Toronto Are Not All Leisure Riders"
+subtitle: "In 2025, casual riders' weekday trips look similar to those of members during the winter, while their summer trips look like leisure"
+author: "Yi Zhi (Harry) Zhang"
+thanks: "Code and data are available at: [https://github.com/harryyz/toronto-bike-share-2025](https://github.com/harryyz/toronto-bike-share-2025)."
 date: today
 date-format: long
-abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
+abstract: "I use all 7.8 million Bike Share Toronto trips from 2025 to compare members and casual riders on when trips start, duration of their trips, and how these patterns change throughout the year. Casual trips look like leisure across the year, as 11% of casual weekday trips start during the morning rush, compared to 19% for members. In the winter, 17% of casual weekday trips start in the morning rush, nearly double the 9% from the summer. 'Casual' appears to include two groups: a small year-round group that rides like members on weekdays, and a large summer group that rides for leisure, so treating all casual riders as leisure riders misses a part of how the bike share system is used."
 format: pdf
 number-sections: true
-bibliography: references.bib
+bibliography: [references.bib, packages.bib]
+execute:
+  echo: false
+  warning: false
+  message: false
 ---
 
 ```{r}
 #| include: false
-#| warning: false
-#| message: false
 
 library(tidyverse)
-library(palmerpenguins)
+library(arrow)
+library(tinytable)
+library(here)
+
+# Read the saved analysis data (never download from the portal here)
+trips <- open_dataset(here("data", "02-analysis_data", "trips_2025")) |>
+  collect()
+
+cleaning_log <- read_csv(
+  here("data", "02-analysis_data", "cleaning_log.csv"),
+  show_col_types = FALSE
+)
+
+rider_colours <- c(Member = "#2b83ba", Casual = "#fdae61")
 ```
 
 
-# Introduction
+# Introduction {#sec-intro}
 
-Overview paragraph
+Bike Share Toronto is a fast-growing bike share system. It grew from 780+ stations and a projected 5.5 million rides in 2023 [@tpa2023rates], to over 7.8 million rides in 2025 [@bikesharedata]. It is one of the few North American bike share systems within a cold climate that runs all throughout the year [@elassi2017]. Within Bike Share Toronto, riders are recorded as either members, or casual riders.
 
-Estimand paragraph
+A common picture we see is that bike share members commute, whereas casual riders ride for leisure. @buck2013 ran a survey, where most short-term users were visitors riding for tourism purposes in Washington DC. @elassi2017 supported the idea that members commute, but casual riders ride for leisure or utilitarian activities within Toronto. However, @elassi2017 used old 2013 data, when the bike share only had 80 stations. By 2025, the system had grown almost tenfold. Pricing also changed in 2023, allowing casual riders to pay per ride. The publisher of the Bike Share Toronto data defined "casual" only for their 2014-2016 data, before these massive changes and system growth [@bikesharedata]. Thus it is unclear whether "casual" riding still means leisure, or if there has been a change in meaning.
 
-Results paragraph
+With all 7.8 million trips from 2025, I compare members and casual riders on the hour they start their trips, the duration of their trips, and how these patterns change throughout the year. Firstly, I find that across the whole year, casual trips do look like leisure. Looking at the timing of when rides start, 11% of casual weekday trips start during the morning rush between 7 and 10 am, while 19% of members start their trips during this same rush. The median casual trip is 17.8 minutes on the weekends, but only 10.7 for members. Whereas during weekdays, this gap is much smaller, 13.8 minutes for casual riders and 10.2 for members. Secondly, casual riding is far more seasonal than member riding. The number of casual trips grew by 45 times by its peak from February to August, while member trips grew only 7 times by its peak from February to July. Thirdly, "casual" actually looks like two subgroups of riders. During winter, January and February, 17% of casual weekday trips began during the morning rush, which was almost double the 9% in the summer, July and August. This statistic changed a lot less for members, with 21% in the winter and 18% in the summer. There appears to exist a small group of year-round casual riders who ride much like members during the morning commute. The other group of casual riders is much larger, and appears to ride for leisure during the summer.
 
-Why it matters paragraph
+If we treat all casual riders as just riders for leisure, we are missing an entire subgroup of casual riders who ride throughout the whole year, and demonstrate similar weekday riding patterns to members. This may matter for the city and the bike share operator when they analyse ridership figures by ridership group to perform tasks like plan winter service. This "member-like" group existing may also be important to consider when pricing memberships. One caveat is that this data records trips and not riders, so all patterns I discuss regard trips and not individuals.
 
-Telegraphing paragraph: The remainder of this paper is structured as follows. @sec-data....
-
-
-
-
-
+The remainder of the paper is arranged as follows. @sec-data-source discusses the data source, context, and considerations. @sec-data-measurement describes how a ride becomes a record, and what "casual" means in the data. @sec-data-season, @sec-data-hour, @sec-data-duration, and @sec-data-casual-season are numerous graphical representations of the data. @sec-data-summary contains a summary statistics table. @sec-appendix-cleaning and @sec-appendix-tests detail data cleaning and tests.
 
 # Data {#sec-data}
 
-## Overview
+## Source, Context, and Considerations {#sec-data-source}
 
-We use the statistical programming language R [@citeR].... Our data [@shelter].... Following @tellingstories, we consider...
+Bike Share Toronto Ridership Data is published by the Toronto Parking Authority (TPA) on the City of Toronto Open Data Portal [@bikesharedata]. I access this dataset through `opendatatoronto` [@R-opendatatoronto]. The data is refreshed monthly, but published as one zip file per calendar year, with each yearly zip containing 12 monthly csv files. 
 
-Overview text
+This paper uses all 12 files from 2025, containing a total of 7,812,520 trips. After data cleaning, I was left with 7,788,842 trips. Each row of data represents one trip, with the following fields: trip ID, duration, start and end station, each with an ID and name, start and end time, bike ID, type of user, which is either member or casual, and bike model (@tbl-variables).
 
-## Measurement
-	
-Some paragraphs about how we go from a phenomena in the world to an entry in the dataset.
+This data is collected automatically by the bike share system as part of its operation and customer charging process. TPA, which runs this system, is a self-funding city agency, and uses parking revenue to fund expansion of bike share. The system has grown from 80 stations and ~400,000 rides in 2011, to 780+ stations and a projected 5.5 million rides in 2023 [@tpa2023rates]. This data of 7.8 million trips in 2025 suggests that ridership has grown even further since 2023.
 
-## Outcome variables
+I selected 2025 as a useful year because a new rate structure was launched on April 3, 2023, which was the first change since 2017 [@tpa2023rates]. The casual prices during the new rate structure launch in 2023 match those listed on the current pricing page as of September 2026 [@cycleto2023pricing; @bikesharepricing], suggesting that casual pricing was broadly stable throughout my study period. Furthermore, the Ontario government passed a law in 2024 to remove bike lanes on Bloor Street, Yonge Street, and University Avenue, and a lower court blocked removal in July 2025. The Court of Appeal reversed this decision on August 14, 2026 [@cbc2026appeal]. Thus, data from 2025 is a snapshot before any removal occurred. This paper does not measure the effect of major bike lane changes because they did not occur in 2025.
 
-Add graphs, tables and text. Use sub-sub-headings for each outcome variable or update the subheading to be singular.
+On ethical considerations, all trip data is anonymized, where no rider names or account IDs are provided so that riders cannot be linked across separate trips. This protects user privacy, but also means that I am only able to study patterns on trips, not people. However, it should be mentioned that patterns in exact start and end times and stations could theoretically help identify likely users who regularly travel the same route. Regarding coverage, stations are concentrated downtown, but the TPA is working to expand into Neighborhood Improvement Areas. For instance, 211 of 375 new stations in 2024 were established within these areas [@tpa2023rates]. The data describes people with access to stations, which is not necessarily all Toronto residents.
 
+On statistical considerations, our dataset is a census of every trip in 2025, not a sample, so the counts have no sampling error. Because the population is trips and not riders, and frequent riders may contribute many trips, patterns in the data are weighted towards frequent users. For example, a member using the service to commute will ride 400 times and be counted 400 times, whereas a tourist who rides once will be counted once. I also cannot extrapolate our results to all cycling in Toronto, because I must exclude people riding their own bikes in the city.
 
-
-Some of our data is of penguins (@fig-bills), from @palmerpenguins.
+A similar dataset I considered was the Bike Share Toronto real-time station feed, which provides real-time bike and dock availability. However, this dataset currently keeps no history, and shows station status rather than trips. There is currently a public request to "track historical bikeshare station locations as they change" [@bikesharerealtime]. I also considered using earlier years of our current dataset [@bikesharedata], but I determined that 2025 was a good year with the most data points that capture the new rate structure.
 
 ```{r}
-#| label: fig-bills
-#| fig-cap: Bills of penguins
-#| echo: false
+#| label: tbl-variables
+#| tbl-cap: "Variables used in the analysis. Each row of the data is one Bike Share Toronto trip taken in 2025. Constructed variables were derived from the recorded fields during cleaning."
 
-ggplot(penguins, aes(x = island, fill = species)) +
-  geom_bar(alpha = 0.8) +
-  scale_fill_manual(values = c("darkorange","purple","cyan4"),
-                    guide = "none") +
-  theme_minimal() +
-  facet_wrap(~species, ncol = 1) +
-  coord_flip()
-```
-
-Talk more about it.
-
-And also planes (@fig-planes). (You can change the height and width, but don't worry about doing that until you have finished every other aspect of the paper - Quarto will try to make it look nice and the defaults usually work well once you have enough text.)
-
-```{r}
-#| label: fig-planes
-#| fig-cap: Relationship between wing length and width
-#| echo: false
-#| warning: false
-#| message: false
-
-analysis_data <- read_csv(here::here("data/02-analysis_data/analysis_data.csv"))
-
-analysis_data |> 
-  ggplot(aes(x = width, y = length)) +
-  geom_point(alpha = 0.8) +
-  theme_minimal() +
-  labs(x = "Wing width (mm)",
-       y = "Wing length (mm)")
-```
-
-Talk way more about it. 
-
-## Predictor variables
-
-Add graphs, tables and text.
-
-Use sub-sub-headings for each outcome variable and feel free to combine a few into one if they go together naturally.
-
-
-
-
-
-
-
-
-# Model
-
-The goal of our modelling strategy is twofold. Firstly,...
-
-Here we briefly describe the Bayesian analysis model used to investigate... Background details and diagnostics are included in [Appendix -@sec-model-details].
-
-## Model set-up
-
-Define $y_i$ as the number of seconds that the plane remained aloft. Then $\beta_i$ is the wing width and $\gamma_i$ is the wing length, both measured in millimeters.  
-
-\begin{align} 
-y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
-\mu_i &= \alpha + \beta_i + \gamma_i\\
-\alpha &\sim \mbox{Normal}(0, 2.5) \\
-\beta &\sim \mbox{Normal}(0, 2.5) \\
-\gamma &\sim \mbox{Normal}(0, 2.5) \\
-\sigma &\sim \mbox{Exponential}(1)
-\end{align}
-
-We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
-
-
-### Model justification
-
-We expect a positive relationship between the size of the wings and time spent aloft. In particular...
-
-We can use maths by including latex between dollar signs, for instance $\theta$.
-
-
-# Results
-
-Our results are summarized in @tbl-modelresults.
-
-```{r}
-#| echo: false
-#| eval: true
-#| warning: false
-#| message: false
-
-library(rstanarm)
-
-first_model <-
-  readRDS(file = here::here("models/first_model.rds"))
-```
-
-```{r}
-#| echo: false
-#| eval: true
-#| label: tbl-modelresults
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
-#| warning: false
-
-modelsummary::modelsummary(
-  list(
-    "First model" = first_model
-  ),
-  statistic = "mad",
-  fmt = 2
+variable_dictionary <- tribble(
+  ~Variable, ~Description, ~Source, ~Example,
+  "Start and end time", "Local date and time the bike was unlocked and returned", "Recorded", "2025-07-14 08:15",
+  "Trip length", "Minutes between unlocking and returning the bike", "Recorded", "9.6",
+  "Start and end station", "Docking station where the trip began and ended", "Recorded", "Bay St / Wellesley St W",
+  "Rider type", "Member or casual; see the Measurement section", "Recorded", "Member",
+  "Bike type", "Classic pedal bike or e-bike", "Constructed", "Classic",
+  "Month", "Month the trip began", "Constructed", "July",
+  "Day type", "Weekday, or weekend or Ontario statutory holiday", "Constructed", "Weekday",
+  "Start hour", "Hour of the day the trip began (0 to 23)", "Constructed", "8",
+  "Round trip", "Whether the trip ended at the station where it started", "Constructed", "No"
 )
+
+tt(variable_dictionary, width = c(0.2, 0.46, 0.14, 0.2))
 ```
 
+I used the statistical programming language `R` for all analysis [@R-base]. I used `ckanr` to locate the download link in the download script [@R-ckanr]. I used `tidyverse` for data cleaning [@tidyverse2019], and `arrow` to save and read the data [@R-arrow]. I used `testthat` for data tests [@R-testthat]. I used `ggplot2` to generate figures [@ggplot22016], and `tinytable` for tables [@R-tinytable]. I used `here` for file paths [@R-here], and `knitr` for Quarto to run the code [@knitr2015].
 
+## Measurement {#sec-data-measurement}
 
+Each row in the dataset is created automatically as a rider unlocks and returns a bike. First, a rider unlocks a bike at a station using a membership, day pass, or pay-as-you-go selection. The system automatically records the trip ID, start time, start station, and bike ID at the moment of unlock. When the rider docks the bike to any station after their ride, the system then records the end time and end station. The duration is calculated as the time between unlocking and bike return, in seconds. User type is set according to how the rider paid, as a "Member" or a "Casual". The bike model is recorded according to the type of bike used in the process, either an ICONIC which is a classic bike, or an EFIT/EFIT G5 which is an e-bike.
 
-# Discussion
+What this dataset fails to measure is the route taken with the bike, or the total distance traveled. Whether the purpose of the trip was for commuting or leisure is also not measured, but may be inferred from timing and duration of the ride, and whether it is a round trip. Therefore, mentions about "commuting" in this paper are not measured detail, but interpretations of patterns from the data.
 
-## First discussion point {#sec-first-point}
+It was difficult to define who the "Casual" label actually covered. The publisher's readme defines members as "annual pass holders" and casual users as "24 or 72 hour pass holders" [@bikesharedata]. But this readme is written to cover files from 2014-2016. In 2023, bike share pricing changed, and the 72-hour pass was removed, while single rides became pay-as-you-go priced per minute [@tpa2023rates; @cycleto2023pricing]. After restructuring, non-membership products now include pay-as-you-go and the Day Pass [@bikesharepricing]. In 2025, "Casual" most likely covers both day-pass holders and pay-as-you-go users because these are the only two non-membership products that the operator offers. When the data records "Casual", we do not know if the rider used a day pass or pay-as-you go, and also do not know whether they are a resident or visitor. This paper examines whether casual trips look like leisure or commuting, using data such as when they start, their duration, whether they are a round trip, and how all of this changes by season.
 
-If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this. 
+Pricing shapes what we measure. Under current pricing, annual memberships include unlimited 30- or 45-minute classic trips depending on tier. Exceeding the time limit costs extra, so members have a reason to limit their trips to their tier's limit [@bikesharepricing]. @fig-duration shows member trips dropping sharply after 30 and 45 minutes, while casual trips do not. The day pass allows unlimited 90-minute classic rides, which is friendly for long leisure rides. Differences in trip length can reflect not just trip purpose, but pricing differences as well.
 
-## Second discussion point
+To fix recording problems in the data, I removed 23,678 trips (0.3%), including trips that were missing an end station or end time, trips under a minute likely due to failed unlocks, and trips over a day likely due to system error. I also noticed that from January to October, all end-station names erroneously repeated the start station's name, which I fixed by rebuilding the names from the station IDs, which were listed correctly. Detailed data cleaning is described in @sec-appendix-cleaning.
 
-Please don't use these as sub-heading labels - change them to be what your point actually is.
+## Rider type and season {#sec-data-season}
 
-## Third discussion point
+```{r}
+#| label: fig-monthly
+#| fig-cap: "Casual riding is far more seasonal than member riding. Casual trips rise from about 9,000 in February to over 400,000 in August, growing from 7% to 35% of all trips, while member trips vary much less across the year."
+#| fig-height: 3.5
 
-## Weaknesses and next steps
+trips |>
+  mutate(month_label = factor(month.abb[month], levels = month.abb)) |>
+  ggplot(aes(x = month_label, fill = user_type)) +
+  geom_bar(position = position_stack(reverse = TRUE)) +
+  scale_fill_manual(values = rider_colours) +
+  scale_y_continuous(labels = \(x) format(x, big.mark = ",", scientific = FALSE)) +
+  labs(x = "Month (2025)", y = "Number of trips", fill = "Rider type") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
 
-Weaknesses and next steps should also be included.
+Members made 72.6% of the trips in 2025, while casual riders made 27.4% (@fig-monthly). Though both groups rode more in the summer, casual riding was more seasonal. From February to July, casual trips grew about 45 times, whereas member trips grew only about 7 times. In the quietest winter months of December, January, February, members still rode approximately 15-25% of their peak months, but casual riders only made about 2-6%. Although our data does not record weather, it does fit evidence that cold and wet weather reduces overall bikeshare use [@gebhart2014], affecting casual users more than members [@fishman2016]. Because the data counts trips rather than riders, I cannot show whether winter led to fewer casual riders, or the same users riding less.
+
+## When trips start {#sec-data-hour}
+
+```{r}
+#| label: fig-hour
+#| fig-cap: "Members ride at both rush hours on weekdays, while casual riders share only the evening peak. On weekdays, 19% of members' trips start between 7 and 10 am, compared with 11% of casual trips; between 4 and 7 pm the two groups are almost equal (30%). On weekends and holidays, both groups ride most in mid-afternoon."
+#| fig-height: 3.5
+
+trips |>
+  ggplot(aes(x = start_hour, colour = user_type)) +
+  geom_freqpoly(aes(y = after_stat(density)), binwidth = 1, center = 0, linewidth = 0.8) +
+  facet_wrap(vars(day_type)) +
+  scale_colour_manual(values = rider_colours) +
+  scale_x_continuous(breaks = c(0, 6, 12, 18, 23)) +
+  scale_y_continuous(labels = \(x) paste0(round(100 * x), "%")) +
+  labs(
+    x = "Hour trip started",
+    y = "Share of the group's trips",
+    colour = "Rider type"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+@fig-hour shows the hour when trips start, as a share of each group's trips. Following @elassi2017, I grouped weekends and statutory holidays in Ontario together. 
+
+On weekdays, for members, there are two peaks, around 8 am and 5 pm, which is consistent with the average commuting schedule. This is the same pattern seen across 40 cities in @bean2021. Casual riders display a much smaller morning peak. About 11% of weekday trips start between 7 and 10 am, much smaller than the 19% for members. However, in the evening, between 4 and 7 pm, both members and casual riders show almost identical activity of around 30%. The evening peak does not distinguish commuting from leisure, the end of the school day or workday leads to both commuting and leisure trips, so similar evening peaks for members and casual riders does not mean that casual riders are commuting.
+
+On weekends and holidays, both groups share a broad afternoon peak. The groups do differ on the amount they ride on these days. Because there are about 2.5 times as many weekdays compared to weekends and holidays, I compare trips per day. Members made 0.77 trips on a weekend for every trip on a weekday, whereas casual riders made 1.45. Just like @elassi2017 found in 2013, members tend to ride more on weekdays while casual riders tend to ride more on weekends.
+
+## How long trips last {#sec-data-duration}
+
+```{r}
+#| label: fig-duration
+#| fig-cap: "Casual trips are longer and more varied than member trips, especially on weekends and holidays, when the typical casual trip lasts about 18 minutes compared with 11 for members. Member trips fall away sharply after 30 and 45 minutes (dashed lines), the trip lengths included in the two membership plans; casual trips show no such drop."
+#| fig-height: 3.5
+
+trips |>
+  ggplot(aes(x = duration_min, colour = user_type)) +
+  geom_freqpoly(
+    aes(y = after_stat(density * width)),
+    binwidth = 0.05, pad = FALSE, linewidth = 0.8
+  ) +
+  geom_vline(xintercept = c(30, 45, 90), linetype = "dashed", colour = "grey50") +
+  facet_wrap(vars(day_type)) +
+  scale_colour_manual(values = rider_colours) +
+  scale_x_log10(
+    breaks = c(1, 5, 15, 30, 45, 90, 360, 1440),
+    labels = c("1", "5", "15", "30", "45", "90", "360", "1,440")
+  ) +
+  scale_y_continuous(labels = \(x) paste0(round(100 * x, 1), "%")) +
+  labs(
+    x = "Trip length (minutes, log scale)",
+    y = "Share of the group's trips",
+    colour = "Rider type"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+In @fig-duration, the trip length ranges from 1 minute to 24 hours. Most trips only last 5 to 20 minutes, so if we used a normal axis, most trips would be compressed to the very left of the graph. Therefore, I decided to use a log scale to space the axis by multiplication, so that the distance from 1 to 10 minutes now equals the distance from 10 to 100 minutes. Each line displays the share of a group's trip at every trip length. The dashed lines mark 30, 45, and 90 minutes.
+
+Casual trips are generally longer and more spread out on the graph, even more so on weekends. The median trip length for members is 10.2 minutes on weekdays and 10.7 on weekends and holidays. The median trip length from casual riders is 13.8 minutes on weekdays, and 17.8 on weekends and holidays. Median here means that when trips are sorted by length, half of the trips are shorter than this value, and half are longer.
+
+The pricing tiers for members show up inherently in the figure. There are large drops in member rides at 30 and 45 minutes specifically, which are the two bike session limits in the membership plan. Just 4.5% of member trips exceed 30 minutes, and 0.9% exceed 45. For casual trips, 22.7% exceed 30, and 13.7% exceed 45.
+
+Longer and more variable casual trips fit the idea of leisure riding. This is consistent with @fishman2016, which reported that casual users generally take longer trips than members. Trip length in our case is measured in time, not distance, so longer trips may include pauses and stops.
+
+## Casual riders across the seasons {#sec-data-casual-season}
+
+```{r}
+#| label: fig-casual-season
+#| fig-cap: "In winter, casual riders' weekday trips look much more like members'. In January and February, 17% of casual weekday trips start between 7 and 10 am, nearly double the 9% in July and August, while members' morning share changes little (21% in winter, 18% in summer)."
+#| fig-height: 3.5
+
+season_colours <- c(
+  "Winter (January and February)" = "#2c7fb8",
+  "Summer (July and August)" = "#c0392b"
+)
+
+trips |>
+  filter(day_type == "Weekday", month %in% c(1, 2, 7, 8)) |>
+  mutate(
+    season = if_else(month %in% c(1, 2), names(season_colours)[1], names(season_colours)[2]),
+    season = factor(season, levels = names(season_colours))
+  ) |>
+  ggplot(aes(x = start_hour, colour = season)) +
+  geom_freqpoly(
+    aes(y = after_stat(density)),
+    binwidth = 1, center = 0, pad = FALSE, linewidth = 0.8
+  ) +
+  facet_wrap(vars(user_type)) +
+  scale_colour_manual(values = season_colours) +
+  scale_x_continuous(breaks = c(0, 6, 12, 18, 23)) +
+  scale_y_continuous(
+    breaks = seq(0, 0.14, by = 0.02),
+    labels = \(x) paste0(round(100 * x), "%")
+  ) +
+  labs(
+    x = "Hour trip started (weekdays)",
+    y = "Share of the group's weekday trips",
+    colour = "Season"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+@fig-casual-season shows only weekday trips in winter (January and February) and summer (July and August), grouped by member or casual rider. In the casual panel, the blue winter line shows a clear morning peak at around 8 am, which is less obvious on the red summer line. But for the member panel, both the winter and summer lines nearly overlap the entire time, since members generally ride at the same times throughout the year. In @sec-data-hour, I discussed how morning hours showed clear signs of commuting. For casual riders, 17% of weekday trips in the winter start between 7 to 10 am, but only 9% of their trips start within that timeframe during the summer. The change for members is a lot smaller, about 21% during the winter and 18% during the summer.
+
+The number of casual weekday trips was 494,552 in the summer, and fell to 18,652 in the winter, which was about 26 times fewer. Casual morning trips fell from 44,859 to 3,192, which is only about 14 times fewer. Since morning trips fell much less than casual riding overall, the remaining casual riding during the winter is more concentrated at commuting times. This suggests that the "casual" tag may cover two groups. One smaller group of "casual" riders ride year-round, and their weekday trips resemble those of members, and a much larger group that mainly ride during the summer, with patterns that look like leisure riding. This pattern is consistent with @elassi2017, which found that Toronto's trips shifted towards rush hours in the winter as casual use fell but members continued to commute. @fishman2016 observed that bad weather deters casual users more than members.
+
+A possible explanation for this pattern is that residents who pay per ride make up a larger proportion of winter casual riding since fewer visitors are in the city at the time (@sec-data-measurement). However, because the data records trips and not riders, I cannot confirm whether the same casual riders change their riding habits during the winter, or whether different people entirely ride during the winter.
+
+## Summary Statistics {#sec-data-summary}
+
+```{r}
+#| label: tbl-summary
+#| tbl-pos: "H"
+#| tbl-cap: "Across 2025 as a whole, casual trips differ from member trips in ways that point to leisure: fewer start in the weekday morning rush, more happen on weekends and holidays, and they last longer. Percentages are shares of each group's own trips; weekday morning trips are a share of each group's weekday trips."
+
+summary_stats <- trips |>
+  summarise(
+    trips = n(),
+    median_min = median(duration_min),
+    weekend_share = mean(day_type == "Weekend or holiday"),
+    morning_share = mean(start_hour[day_type == "Weekday"] %in% 7:9),
+    .by = user_type
+  ) |>
+  mutate(share_all = trips / sum(trips))
+
+pct <- \(x) paste0(format(round(100 * x, 1), nsmall = 1), "%")
+
+format_column <- function(group) {
+  row <- filter(summary_stats, user_type == group)
+  c(
+    format(row$trips, big.mark = ","),
+    pct(row$share_all),
+    format(round(row$median_min, 1), nsmall = 1),
+    pct(row$weekend_share),
+    pct(row$morning_share)
+  )
+}
+
+summary_table <- tibble(
+  Measure = c(
+    "Trips",
+    "Share of all trips",
+    "Median trip length (minutes)",
+    "Trips on weekends or holidays",
+    "Weekday trips starting 7 to 10 am"
+  ),
+  Members = format_column("Member"),
+  `Casual riders` = format_column("Casual")
+)
+
+tt(summary_table) |>
+  format_tt(escape = TRUE) |>
+  style_tt(j = 2:3, align = "r")
+```
+
+@tbl-summary unites the measures I discussed in the data section. I discussed share of trips and seasonality in @sec-data-season, weekday morning trips and weekend riding in @sec-data-hour, and median trip length in @sec-data-duration.
 
 \newpage
 
@@ -196,64 +287,42 @@ Weaknesses and next steps should also be included.
 
 # Appendix {-}
 
-
-# Additional data details
-
-# Model details {#sec-model-details}
-
-## Posterior predictive check
-
-In @fig-ppcheckandposteriorvsprior-1 we implement a posterior predictive check. This shows...
-
-In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. This shows... 
+# Data cleaning {#sec-appendix-cleaning}
 
 ```{r}
-#| eval: true
-#| echo: false
-#| message: false
-#| warning: false
-#| label: fig-ppcheckandposteriorvsprior
-#| layout-ncol: 2
-#| fig-cap: "Examining how the model fits, and is affected by, the data"
-#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
+#| label: tbl-cleaning
+#| tbl-pos: "H"
+#| tbl-cap: "Cleaning removed 0.3% of the raw 2025 trips. Each step lists the trips remaining after it and how many it removed."
 
-pp_check(first_model) +
-  theme_classic() +
-  theme(legend.position = "bottom")
-
-posterior_vs_prior(first_model) +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1") +
-  theme(legend.position = "bottom") +
-  coord_flip()
+cleaning_log |>
+  mutate(
+    removed = lag(trips) - trips,
+    `Trips remaining` = format(trips, big.mark = ","),
+    `Trips removed` = if_else(is.na(removed), "", format(removed, big.mark = ","))
+  ) |>
+  select(Step = step, `Trips remaining`, `Trips removed`) |>
+  tt() |>
+  style_tt(j = 2:3, align = "r")
 ```
 
-## Diagnostics
+- Read 12 monthly csv files using Windows-1252 encoding so that station names with dashes could display correctly.
+- Removal numbers are given in @tbl-cleaning. Removals included incomplete trips (bike not docked, lost, stolen), trips under 60 seconds (failed unlocks, @elassi2017 used 30 seconds for the same reason), and trips over 24 hours (likely system errors).
+- Reconstructed station names for January–October, where end-station names repeated the start-station name. Rebuilt names by using station IDs to match each station's most recent name. 20 stations only ever appeared as trip ends, and labeled "Station [ID]".
+- Constructed the following variables: trip length in minutes, month and start hour, day type: weekends plus Ontario's nine statutory holidays in 2025, bike type and round trip.
+- Saved data as Parquet files, one per month, so I stay under the 100MB GitHub file limit.
 
-@fig-stanareyouokay-1 is a trace plot. It shows... This suggests...
+# Data tests {#sec-appendix-tests}
 
-@fig-stanareyouokay-2 is a Rhat plot. It shows... This suggests...
+Tests were run for:
 
-```{r}
-#| echo: false
-#| eval: true
-#| message: false
-#| warning: false
-#| label: fig-stanareyouokay
-#| fig-cap: "Checking the convergence of the MCMC algorithm"
-#| fig-subcap: ["Trace plot", "Rhat plot"]
-#| layout-ncol: 2
+- **Structure:** Columns are expected, no missing values, no duplicate trips, and row counts match the cleaning log.
+- **Valid categories:** I only see expected rider types and day types.
+- **Dates/Times:** All days are in 2025, month and the hour agree with the start time. All holidays are grouped correctly.
+- **Duration:** Duration is between 1 minute to 24 hours.
+- **Stations:** Names encoded correctly, one name per station variable.
 
-plot(first_model, "trace")
-
-plot(first_model, "rhat")
-```
-
-
+Tests were run and passed on simulated data first before actual data. Check GitHub repository for 01-test_simulated_data.R and 04-test_analysis_data.R for details.
 
 \newpage
 
-
 # References
-
-
