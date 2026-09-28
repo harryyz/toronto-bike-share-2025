@@ -32,11 +32,11 @@ The repo is structured as:
 
 ## Statement on LLM usage
 
-Used Claude (Anthropic) Opus 5.5
+Used Claude (Anthropic) Opus 5.5.
 Claude wrote most of the R code (simulation, tests, download, cleaning, figures, and tables).
 Claude helped choose and refine the final research question, and produced a detailed recommended outline for the paper. I agreed with and used the general section numbering on this outline.
 Claude helped identify related literature, I read all of the recommended literature and selected ones I found useful for the paper. I also personally found related literature and discussed with claude on the viability, which was also used and cited.
-At no point did I ever copy/paste any of claude's prose, but I used ideas of how to arrange information across each section from the outline, specifically especially in 2.3, 2.4, and 2.6. The last version of the outline I referenced is in other/llm_usage/outline.md
+At no point did I ever copy/paste any of claude's prose, but I used ideas of how to arrange information across each section from the outline, specifically especially in 2.3, 2.4, and 2.6. The last version of the outline I referenced is in other/llm_usage/outline.md.
 After writing, I asked claude whether each section follows the rubric, and enacted changes on my own.
 Full history in other/llm_usage/usage.txt
 
