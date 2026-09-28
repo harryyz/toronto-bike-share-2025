@@ -104,7 +104,7 @@ To fix recording problems in the data, I removed 23,678 trips (0.3%), including 
 
 ```{r}
 #| label: fig-monthly
-#| fig-cap: "Casual riding is far more seasonal than member riding. Casual trips rise from about 9,000 in February to over 400,000 in August, growing from 7% to 35% of all trips, while member trips vary much less across the year."
+#| fig-cap: "Number of Bike Share Toronto trips in each month of 2025, split by rider type. Casual trips range from about 9,000 in February to over 400,000 in August, which is from 7% to 35% of each month's trips. Member trips range from about 116,000 in February to approximately 784,000 in July."
 #| fig-height: 3.5
 
 trips |>
@@ -124,7 +124,7 @@ Members made 72.6% of the trips in 2025, while casual riders made 27.4% (@fig-mo
 
 ```{r}
 #| label: fig-hour
-#| fig-cap: "Members ride at both rush hours on weekdays, while casual riders share only the evening peak. On weekdays, 19% of members' trips start between 7 and 10 am, compared with 11% of casual trips; between 4 and 7 pm the two groups are almost equal (30%). On weekends and holidays, both groups ride most in mid-afternoon."
+#| fig-cap: "Share of each rider type's trips starting in each hour of the day, on weekdays and on weekends or holidays. On weekdays, member trips peak at 8 am and 5 pm, while casual trips have a smaller 8 am peak and a main peak at 5 pm. Between 7 and 10 am, 19% of member trips and 11% of casual trips start. Between 4 and 7 pm, about 30% of each group's trips start. Both groups peak in mid-afternoon on weekends and holidays."
 #| fig-height: 3.5
 
 trips |>
@@ -153,7 +153,7 @@ On weekends and holidays, both groups share a broad afternoon peak. The groups d
 
 ```{r}
 #| label: fig-duration
-#| fig-cap: "Casual trips are longer and more varied than member trips, especially on weekends and holidays, when the typical casual trip lasts about 18 minutes compared with 11 for members. Member trips fall away sharply after 30 and 45 minutes (dashed lines), the trip lengths included in the two membership plans; casual trips show no such drop."
+#| fig-cap: "Share of each rider type's trips by trip length in minutes (log scale) on weekdays and on weekends or holidays. Dashed lines mark 30, 45, and 90 minutes. Member trips are concentrated at shorter lengths and fall close to zero beyond 45 minutes. Casual trips peak at slightly longer lengths and have a longer tail, which drops at 90 minutes on weekends and holidays. Throughout 2025, 4.5% of member trips and 22.7% of casual trips last more than 30 minutes."
 #| fig-height: 3.5
 
 trips |>
@@ -191,7 +191,7 @@ Longer and more variable casual trips fit the idea of leisure riding. This is co
 
 ```{r}
 #| label: fig-casual-season
-#| fig-cap: "In winter, casual riders' weekday trips look much more like members'. In January and February, 17% of casual weekday trips start between 7 and 10 am, nearly double the 9% in July and August, while members' morning share changes little (21% in winter, 18% in summer)."
+#| fig-cap: "Share of each rider type's weekday trips starting in each hour, in winter (January and February) and summer (July and August). Among casual riders, 17% of weekday trips start between 7 and 10 am in winter, compared with 9% in summer. Among members the share is 21% in winter and 18% in summer."
 #| fig-height: 3.5
 
 season_colours <- c(
@@ -237,7 +237,7 @@ A possible explanation for this pattern is that residents who pay per ride make 
 ```{r}
 #| label: tbl-summary
 #| tbl-pos: "H"
-#| tbl-cap: "Across 2025 as a whole, casual trips differ from member trips in ways that point to leisure: fewer start in the weekday morning rush, more happen on weekends and holidays, and they last longer. Percentages are shares of each group's own trips; weekday morning trips are a share of each group's weekday trips."
+#| tbl-cap: "Member and casual trips in 2025. Percentages are shares of each group's own trips, except weekday trips starting 7 to 10 am, which are shares of each group's weekday trips. Median trip length is across all days."
 
 summary_stats <- trips |>
   summarise(
